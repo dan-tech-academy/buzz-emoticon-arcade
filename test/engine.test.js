@@ -59,3 +59,7 @@ test('a late aerial dash lands on solid ground instead of tunneling through it',
   const g=settled();Object.assign(g.player,{x:200,y:413,vy:300,grounded:false,invincible:0});
   step(g,{dash:true},1/60);advance(g,25);assert.equal(g.player.y+g.player.h,480);assert.equal(g.player.hp,5);
 });
+test('a stomp separates the player from a surviving stage3 minion',()=>{
+  const g=createGame(2),e=g.enemies[0];Object.assign(g.player,{x:e.x,y:386,vy:220,invincible:0});
+  step(g,{},1/60);assert.equal(e.hp,1);advance(g,3);assert.equal(g.player.hp,5);assert.ok(g.player.y+g.player.h<e.y);
+});

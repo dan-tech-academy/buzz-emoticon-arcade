@@ -104,7 +104,7 @@ export function step(g,input,dt){
       e.vx=dir*(active?85+g.level*13:32)*(e.slow>0?.35:1);e.x=clamp(e.x+e.vx*dt,Math.max(ground.x+5,e.origin-180),Math.min(ground.x+ground.w-e.w-5,e.origin+180));
     }
     land(e,g.platforms,dt);
-    if(overlaps(p,e)){if(p.dash>0&&e.dashHit!==p.id){e.dashHit=p.id;hitEnemy(g,e,2,p.face);}else if(p.vy>120&&p.y+p.h<e.y+28&&!e.boss){hitEnemy(g,e,2,p.face);p.vy=-430;p.jumps=1;}else hurtPlayer(g,1,Math.sign(p.x-e.x)||-1);}
+    if(overlaps(p,e)){if(p.dash>0&&e.dashHit!==p.id){e.dashHit=p.id;hitEnemy(g,e,2,p.face);}else if(p.vy>120&&p.y+p.h<e.y+28&&!e.boss){hitEnemy(g,e,2,p.face);p.y=e.y-p.h;p.vy=-430;p.jumps=1;}else hurtPlayer(g,1,Math.sign(p.x-e.x)||-1);}
   }
   for(const b of g.projectiles){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
     if(b.friendly){for(const e of g.enemies)if(e.hp>0&&overlaps(b,e)){if(b.face==='cool')e.slow=2;hitEnemy(g,e,b.damage,Math.sign(b.vx));b.life=0;break;}}
