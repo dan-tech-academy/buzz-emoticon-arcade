@@ -9,6 +9,9 @@ createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
     const pathname = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
+    // Only public game routes, never checkout metadata or private files.
+    const allowed = pathname === '/index.html' || pathname === '/icon.png' || pathname === '/manifest.webmanifest' || /^\/src\/[a-z-]+\.(?:js|css)$/.test(pathname) || /^\/emotes\/[a-z-]+\.png$/.test(pathname);
+    if (!allowed) throw new Error('Not found');
     const publicAsset = dev && (pathname.startsWith('/emotes/') || ['/icon.png','/manifest.webmanifest'].includes(pathname));
     const path = resolve(root, `.${publicAsset ? '/public' : ''}${pathname}`);
     if (!path.startsWith(root + sep) || !(await stat(path)).isFile()) throw new Error('Not found');
