@@ -55,3 +55,7 @@ test('boss arena prevents escaping the encounter while leaving dodge space',()=>
 test('each boss rewards the matching equipable emoji',()=>{
   for(const [level,reward] of ['devil','cool','angel'].entries()){const g=createGame(level);hitEnemy(g,g.enemies.at(-1),100);assert.equal(equip(g,reward),true);assert.equal(g.equipped,reward);}
 });
+test('a late aerial dash lands on solid ground instead of tunneling through it',()=>{
+  const g=settled();Object.assign(g.player,{x:200,y:413,vy:300,grounded:false,invincible:0});
+  step(g,{dash:true},1/60);advance(g,25);assert.equal(g.player.y+g.player.h,480);assert.equal(g.player.hp,5);
+});

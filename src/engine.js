@@ -84,7 +84,8 @@ export function step(g,input,dt){
   if(input.dash&&p.dashCooldown<=0){p.dash=.19;p.dashCooldown=.9;p.id++;emit(g,'dash');}
   if(p.dash>0){p.vx=p.face*830;p.vy*=.4;}else p.vx+=clamp(axis*315-p.vx,-2400*dt,2400*dt);
   p.x=clamp(p.x+p.vx*dt,g.bossActive?3450:0,g.width-p.w);
-  if(p.dash<=0)land(p,g.platforms,dt);else p.y+=p.vy*dt;if(p.grounded)p.jumps=0;
+  // Dash changes velocity, not whether the floor exists.
+  land(p,g.platforms,dt);if(p.grounded)p.jumps=0;
   if(input.attack)attack(g);if(input.buzz)buzz(g);if(g.status!=='playing')return;
   if(p.y>HEIGHT+100){p.invincible=0;p.dash=0;hurtPlayer(g);if(g.status==='playing'){p.x=g.checkpoint;p.y=380;p.vx=p.vy=0;p.jumps=0;p.invincible=1.5;g.bossActive=false;}}
   if(p.x>=2740&&!g.checkpointActive){g.checkpoint=2750;g.checkpointActive=true;p.hp=5;emit(g,'checkpoint');}
