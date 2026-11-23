@@ -20,7 +20,7 @@ function activateAudio(){if(!sound)return;try{audio??=new (window.AudioContext||
 function tone(hz,duration=.08,type='sine',volume=.06){if(!sound||!audio)return;try{const osc=audio.createOscillator(),gain=audio.createGain();osc.type=type;osc.frequency.setValueAtTime(hz,audio.currentTime);osc.frequency.exponentialRampToValueAtTime(Math.max(30,hz*.5),audio.currentTime+duration);gain.gain.setValueAtTime(volume,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);osc.connect(gain).connect(audio.destination);osc.start();osc.stop(audio.currentTime+duration);}catch{}}
 function notify(text){$('announcement').textContent=text;$('announcement').classList.add('show');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('announcement').classList.remove('show'),2200);}
 function clearInput(){keys.clear();pressed.clear();touches.clear();document.querySelectorAll('[data-action]').forEach(b=>b.classList.remove('held'));}
-function showModal(html,kind){clearInput();mode=kind;$('modal-content').innerHTML=html;if(!modal.open)modal.showModal();}
+function showModal(html,kind){clearInput();mode=kind;$('modal-content').innerHTML=html;const title=$('modal-content').querySelector('h2');if(title)title.id='modal-title';if(!modal.open)modal.showModal();}
 function closeModal(){modal.close();mode='playing';clearInput();canvas.focus({preventScroll:true});}
 function start(level=game.level){game=createGame(level,{...readSave(),score:0,collected:0,equipped:game.equipped});renderer.reset();closeModal();saveProgress();renderWeapons();updateHUD();activateAudio();notify(STAGES[level].subtitle);}
 function nextStage(equipReward=true){
