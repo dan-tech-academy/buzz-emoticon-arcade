@@ -4,9 +4,16 @@ import {createRenderer} from './renderer.js';
 const $=id=>document.getElementById(id),canvas=$('game'),modal=$('modal');
 const keys=new Set(),pressed=new Set(),touches=new Map();
 let game,mode='welcome',audio,sound=true,wasPlaying=false,noticeTimer,frameTime=0,accumulator=0,hudTimer=0,touchAutoAttack=false;
-const isTouch=()=>navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches;
-document.body.classList.toggle('touch-device',isTouch());
-if(isTouch())canvas.setAttribute('aria-label','Người que đi cảnh. Tay trái giữ nút chạy; tay phải nhảy, lướt hoặc BUZZ. Chạm Tự đánh để bật đánh liên tục. Hạ boss để thu phục emoji.');
+// Match the visible touch layout, not merely touchscreen hardware capability.
+const isTouch=()=>matchMedia('(pointer:coarse)').matches||(navigator.maxTouchPoints>0&&matchMedia('(max-width:760px) and (min-height:531px)').matches);
+let previousTouchLayout;
+function syncInputLayout(){
+  const touch=isTouch();document.body.classList.toggle('touch-device',touch);
+  if(previousTouchLayout!==undefined&&previousTouchLayout!==touch){clearInput();touchAutoAttack=false;document.querySelector('[data-action="attack"]').setAttribute('aria-pressed','false');}
+  previousTouchLayout=touch;
+  canvas.setAttribute('aria-label',touch?'Người que đi cảnh. Tay trái giữ nút chạy; tay phải nhảy, lướt hoặc BUZZ. Chạm Tự đánh để bật đánh liên tục. Hạ boss để thu phục emoji.':'Người que đi cảnh. A D chạy, Space nhảy đôi, J đánh, K lướt, E BUZZ. Hạ boss để thu phục emoji.');
+}
+syncInputLayout();window.addEventListener('resize',syncInputLayout);
 const imageIds=['smile','wink','love','laugh','cry','devil','cool','angel','party','clap'];
 const images=Object.fromEntries(imageIds.map(id=>{const img=new Image();img.src=`/emotes/${id}.png`;return[id,img];}));
 const renderer=createRenderer(canvas,images);
