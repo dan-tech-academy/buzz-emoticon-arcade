@@ -63,3 +63,7 @@ test('a stomp separates the player from a surviving stage3 minion',()=>{
   const g=createGame(2),e=g.enemies[0];Object.assign(g.player,{x:e.x,y:386,vy:220,invincible:0});
   step(g,{},1/60);assert.equal(e.hp,1);advance(g,3);assert.equal(g.player.hp,5);assert.ok(g.player.y+g.player.h<e.y);
 });
+test('attacking during one dash does not grant the dash a second hit',()=>{
+  const g=createGame(),boss=g.enemies.at(-1);g.enemies=[boss];g.bossActive=true;Object.assign(g.player,{x:3600,y:414,invincible:0});boss.x=3630;
+  step(g,{dash:true},1/60);assert.equal(boss.hp,boss.maxHp-2);step(g,{attack:true},1/60);assert.equal(boss.hp,boss.maxHp-3);
+});

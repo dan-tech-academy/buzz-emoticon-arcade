@@ -54,7 +54,7 @@ export function hitEnemy(g,e,damage,direction=1){
   }
 }
 function attack(g){
-  const p=g.player,w=g.equipped;if(p.attackCooldown>0)return;p.attack=.2;p.attackCooldown=w==='smile'?.27:.36;p.id++;emit(g,'attack',{weapon:w});
+  const p=g.player,w=g.equipped;if(p.attackCooldown>0)return;p.attack=.2;p.attackCooldown=w==='smile'?.27:.36;emit(g,'attack',{weapon:w});
   if(w==='devil'||w==='cool')g.projectiles.push({x:p.x+15+p.face*24,y:p.y+25,w:21,h:17,vx:p.face*650,vy:0,friendly:true,life:1.3,face:w,damage:w==='devil'?1.6:1.2});
   else{const reach=w==='angel'?126:96,box={x:p.face>0?p.x+6:p.x-reach+24,y:p.y-18,w:reach,h:100};
     effect(g,'slash',p.x+15+p.face*35,p.y+31,WEAPONS[w].color,{direction:p.face,life:.19,maxLife:.19});
