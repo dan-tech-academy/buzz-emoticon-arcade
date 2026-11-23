@@ -19,7 +19,7 @@ npm start       # production build on 4173; override with PORT
 | --- | --- | --- |
 | Run | A/D or left/right | Hold direction |
 | Double-jump | Space, W or up; press twice | Tap NHẢY twice |
-| Use emoji | Hold J or X | Hold ĐÁNH |
+| Use emoji | Hold J or X | Tap TỰ ĐÁNH to toggle continuous attacks |
 | Dash / dodge | K or Shift | LƯỚT |
 | BUZZ shockwave | E or L | BUZZ! |
 | Equip unlocked emoji | 1–4 or weapon rack | Weapon rack / Kho emoji |
@@ -28,7 +28,9 @@ npm start       # production build on 4173; override with PORT
 - Start with **Cười xoáy** (melee). Defeat **Quỷ Spam** for fireballs, **Trùm Đóng Băng** for slowing ice shots, and **Thiên Thần Lỗi** for a wide slash that heals on kills.
 - Each of three stages has platforms, three gaps, minions, a healing checkpoint and a boss arena. Bosses fire aimed projectiles, telegraph charges and enrage below half health.
 - Jump on minions or dash through them to deal damage. BUZZ starts full, damages nearby enemies and destroys enemy projectiles. It recharges over time, on hits and through pickups.
-- Falling costs one heart and returns you to safety. Death offers a checkpoint retry with full hearts and a reset boss encounter; there is no permanent dead-board state.
+- The opening has four slow, one-hit minions and an earlier healing flag. Later stages add enemies and harder boss patterns; melee hits provide brief contact protection.
+- Gaps have visible danger markers and a first-stage jump guide. Jump buffering, coyote time and double-jump help with timing. Falling costs one heart and returns to the last safe shore; an arena fall keeps the current boss encounter active. Death offers a checkpoint retry with full hearts and a reset boss encounter.
+- The dotted ring shows BUZZ range. An empty cast gives feedback without spending energy. Touch attack can stay on while the right thumb jumps; on-device help uses touch labels. Sound starts enabled after the start gesture unless previously muted.
 - Combo kills multiply points. Stage transitions retain run score; restarting a stage starts a new score. Permanent emoji unlocks, equipped power, current stage, record and sound preference persist locally. Reload starts a fresh attempt at the saved stage, not an exact frame restoration.
 - Portrait and landscape touch controls support simultaneous movement, jumps and attacks. Physical mobile hardware has not been verified.
 

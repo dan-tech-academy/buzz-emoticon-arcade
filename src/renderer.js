@@ -85,7 +85,7 @@ export function createRenderer(canvas,images){
     ctx.globalAlpha=1;
   }
   function draw(g,dt=1/60){
-    const target=clamp(g.player.x-width*.36,0,Math.max(0,g.width-width));camera+=(target-camera)*Math.min(1,dt*7);shake=Math.max(0,shake-dt*30);
+    const target=clamp(g.player.x-width*(width<650?.2:.36),0,Math.max(0,g.width-width));camera+=(target-camera)*Math.min(1,dt*7);shake=Math.max(0,shake-dt*30);
     ctx.setTransform(canvas.width/width,0,0,canvas.height/HEIGHT,0,0);ctx.clearRect(0,0,width,HEIGHT);ctx.save();
     if(shake>0&&!reduced)ctx.translate(Math.sin(performance.now()*.12)*shake,Math.cos(performance.now()*.15)*shake*.5);
     background(g);ctx.save();ctx.translate(-camera,0);
@@ -101,17 +101,23 @@ export function createRenderer(canvas,images){
       if(p.y===480){for(let x=p.x+4;x<p.x+p.w;x+=72){rect(x,510,55,1,C.platform);rect(x+34,496,1,14,C.platform);}}
       else{line([[p.x+10,p.y+20],[p.x+25,p.y+36],[p.x+40,p.y+20]],C.platform,3);}
     }
-    for(const x of [830,1720,2540]){line([[x+12,522],[x+28,507],[x+43,523],[x+59,507],[x+75,523],[x+91,507],[x+107,522]],C.red,3);text('!',x-15,463,18,C.red);}
+    const floors=g.platforms.filter(p=>p.y===480);
+    for(let i=0;i<floors.length-1;i++){const x=floors[i].x+floors[i].w,gap=floors[i+1].x-x;
+      for(let offset=8;offset<gap-8;offset+=22)line([[x+offset,537],[x+offset+16,515]],C.red,2);
+      text('VỰC',x+gap/2,505,12,C.red,'center');circle(x-20,456,12,C.red);text('!',x-20,461,16,C.ink,'center');
+      if(g.level===0&&g.player.x<x&&g.player.x>x-350){ctx.strokeStyle=C.gold;ctx.lineWidth=2;ctx.setLineDash([4,7]);ctx.beginPath();ctx.moveTo(x-55,463);ctx.quadraticCurveTo(x+gap/2,280,x+gap+45,463);ctx.stroke();ctx.setLineDash([]);text('NHẢY ĐÔI',x-35,421,11,C.gold,'right');}
+    }
     for(const coin of g.coins)if(!coin.taken&&coin.x>camera-30&&coin.x<camera+width+30){circle(coin.x,coin.y+Math.sin(g.time*3+coin.x)*4,15,C.dark);image('wink',coin.x,coin.y+Math.sin(g.time*3+coin.x)*4,25);}
-    rect(2750,364,4,116,C.edge);rect(2754,365,56,33,g.checkpointActive?C.lime:C.purple);text('Y!',2768,388,19,C.ink);text('CHECKPOINT',2727,348,10,g.checkpointActive?C.lime:C.muted);
+    const flag=g.checkpointTarget;rect(flag,364,4,116,C.edge);rect(flag+4,365,56,33,g.checkpointActive?C.lime:C.purple);text('Y!',flag+18,388,19,C.ink);text('ĐIỂM HỒI SINH',flag-23,348,10,g.checkpointActive?C.lime:C.muted);
     if(g.bossActive){rect(3444,335,5,145,C.red);for(let i=0;i<7;i++)rect(3434+(i%2)*10,340+i*20,20,3,C.red);}
     text('LÃNH ĐỊA BOSS',3740,287,16,STAGES[g.level].color);
     text(STAGES[g.level].boss,3740,314,27,C.white);
-    if(g.player.x<450){text('CHẠY →',125,437,12,C.white);text('NHẢY ĐÔI ↑↑',320,351,11,C.lime);text('J / ĐÁNH',555,427,12,C.purple);}
+    if(g.player.x<450){text('CHẠY →',125,437,12,C.white);text('NHẢY ĐÔI ↑↑',320,351,11,C.lime);text(g.touchControls?'TỰ ĐÁNH':'J / ĐÁNH',555,427,12,C.purple);}
     for(const e of g.enemies)if(e.hp>0&&e.x+130>camera&&e.x-130<camera+width)foe(e,g);
     for(const b of g.projectiles){const color=WEAPONS[b.face]?.color||C.red;line([[b.x+10-b.vx*.035,b.y+10],[b.x+10,b.y+10]],color,5);image(b.face,b.x+b.w/2,b.y+b.h/2,b.friendly?28:31);}
+    if(g.player.energy>=100){ctx.globalAlpha=.25;ctx.strokeStyle=C.lime;ctx.lineWidth=1.5;ctx.setLineDash([7,9]);ctx.beginPath();ctx.arc(g.player.x+15,g.player.y+33,235,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
     stick(g.player,g);for(const f of g.effects)fx(f);ctx.restore();
-    if(g.combo>1&&g.comboTime>0){text(`${g.combo} HIT`,width-25,126,34,C.lime,'right');text('COMBO',width-25,145,10,C.muted,'right');}
+    if(g.combo>1&&g.comboTime>0){text(`${g.combo} ĐÒN`,width-25,126,32,C.lime,'right');text('LIÊN HOÀN',width-25,145,10,C.muted,'right');}
     ctx.restore();
   }
   return {draw,shake(amount){shake=Math.max(shake,amount);},reset(){camera=0;}};
