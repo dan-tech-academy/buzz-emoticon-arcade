@@ -101,7 +101,7 @@ document.querySelectorAll('[data-action]').forEach(button=>{
   const release=event=>{touches.delete(event.pointerId);if(![...touches.values()].includes(button.dataset.action))button.classList.remove('held');};
   button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
 });
-window.addEventListener('blur',()=>{clearInput();pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){saveProgress();clearInput();pause();}});
+window.addEventListener('blur',()=>{clearInput();pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();pause();}});
 modal.addEventListener('cancel',event=>{event.preventDefault();if(mode==='welcome')return;if(mode==='dead'||mode==='reward')return;if(mode==='help'||mode==='collection'){if(wasPlaying)closeModal();else welcome();}else closeModal();});
 $('pause-button').onclick=pause;$('help-button').onclick=()=>{if(mode==='playing'||mode==='welcome')help();};$('collection-button').onclick=collection;
 $('sound-button').onclick=()=>{sound=!sound;try{localStorage.setItem('buzz-action-sound',String(sound));}catch{}activateAudio();tone(600);updateHUD();};
