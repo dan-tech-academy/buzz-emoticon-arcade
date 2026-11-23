@@ -117,7 +117,7 @@ document.addEventListener('keydown',event=>{
   if(event.key==='Escape'||event.code==='KeyP'){event.preventDefault();pause();return;}
   if(event.key==='?'){event.preventDefault();help();return;}
   if(mode!=='playing')return;
-  if(/^[1-4]$/.test(event.key)){if(equip(game,Object.keys(WEAPONS)[Number(event.key)-1])){saveProgress();renderWeapons();updateHUD();}return;}
+  if(/^[1-4]$/.test(event.key)){if(event.repeat)return;if(equip(game,Object.keys(WEAPONS)[Number(event.key)-1])){saveProgress();renderWeapons();updateHUD();}return;}
   // Preserve native activation for a focused button. Canvas focus owns game keys.
   if(event.target.closest?.('button,a')&&(event.code==='Space'||event.code==='Enter'))return;
   const action=bindings[event.code];if(!action)return;event.preventDefault();activateAudio();if(!keys.has(event.code))pressed.add(action);keys.add(event.code);
