@@ -36,7 +36,7 @@ test('healing slash restores a missing heart only on an actual kill',()=>{
   const g=createGame(0,{owned:['angel'],equipped:'angel'});g.player.hp=3;const e=g.enemies[0];hitEnemy(g,e,1);assert.equal(g.player.hp,3);hitEnemy(g,e,1);assert.equal(g.player.hp,4);hitEnemy(g,e,1);assert.equal(g.player.hp,4);
 });
 test('boss death grants its emoji, retains prior unlocks and ends the stage',()=>{
-  const g=createGame(1,{owned:['devil'],equipped:'devil'}),boss=g.enemies.find(e=>e.boss);hitEnemy(g,boss,boss.maxHp);
+  const g=createGame(1,{owned:['devil'],equipped:'devil'}),boss=g.enemies.find(e=>e.boss);g.bossActive=true;hitEnemy(g,boss,boss.maxHp);
   assert.equal(g.status,'cleared');assert.deepEqual(g.owned,['smile','devil','cool']);assert.equal(g.events.at(-1).type,'reward');const x=g.player.x;step(g,{right:true},1/60);assert.equal(g.player.x,x);
 });
 test('checkpoint heals and death retry resets boss health and projectiles',()=>{
@@ -53,7 +53,7 @@ test('boss arena prevents escaping the encounter while leaving dodge space',()=>
   const g=settled();g.player.x=3510;step(g,{},1/60);assert.equal(g.bossActive,true);advance(g,60,{left:true});assert.ok(g.player.x>=3450);
 });
 test('each boss rewards the matching equipable emoji',()=>{
-  for(const [level,reward] of ['devil','cool','angel'].entries()){const g=createGame(level);hitEnemy(g,g.enemies.at(-1),100);assert.equal(equip(g,reward),true);assert.equal(g.equipped,reward);}
+  for(const [level,reward] of ['devil','cool','angel'].entries()){const g=createGame(level);g.bossActive=true;hitEnemy(g,g.enemies.at(-1),100);assert.equal(equip(g,reward),true);assert.equal(g.equipped,reward);}
 });
 test('a late aerial dash lands on solid ground instead of tunneling through it',()=>{
   const g=settled();Object.assign(g.player,{x:200,y:413,vy:300,grounded:false,invincible:0});
@@ -66,4 +66,9 @@ test('a stomp separates the player from a surviving stage3 minion',()=>{
 test('attacking during one dash does not grant the dash a second hit',()=>{
   const g=createGame(),boss=g.enemies.at(-1);g.enemies=[boss];g.bossActive=true;Object.assign(g.player,{x:3600,y:414,invincible:0});boss.x=3630;
   step(g,{dash:true},1/60);assert.equal(boss.hp,boss.maxHp-2);step(g,{attack:true},1/60);assert.equal(boss.hp,boss.maxHp-3);
+});
+test('fireballs cannot damage a boss before entering the arena',()=>{
+  const g=createGame(1,{owned:['devil'],equipped:'devil'}),boss=g.enemies.at(-1);g.enemies=[boss];Object.assign(g.player,{x:3420,y:414});boss.x=3830;
+  step(g,{attack:true},1/60);advance(g,55);assert.equal(g.bossActive,false);assert.equal(boss.hp,boss.maxHp);assert.equal(g.status,'playing');
+  g.bossActive=true;hitEnemy(g,boss,1);assert.equal(boss.hp,boss.maxHp-1);
 });

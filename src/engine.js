@@ -43,7 +43,7 @@ export function hurtPlayer(g,damage=1,direction=-1){
   if(!p.hp){g.status='dead';emit(g,'dead');}return true;
 }
 export function hitEnemy(g,e,damage,direction=1){
-  if(e.hp<=0||g.status!=='playing')return;
+  if(e.hp<=0||g.status!=='playing'||(e.boss&&!g.bossActive))return;
   e.hp=Math.max(0,e.hp-damage);e.flash=.17;e.x+=direction*(e.boss?7:22);g.player.energy=Math.min(100,g.player.energy+5);
   emit(g,'hit',{boss:e.boss});effect(g,'burst',e.x+e.w/2,e.y+e.h/2,WEAPONS[g.equipped].color);
   if(e.hp<=0){
