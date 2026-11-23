@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SIZE, adjacent, validChain, findChain, createBoard, collapse, buzzArea, chainScore, newGame, clearCells, levelConfig } from '../src/engine.js';
+import { SIZE, adjacent, validChain, findChain, createBoard, collapse, buzzArea, chainScore, newGame, restoreGame, clearCells, levelConfig } from '../src/engine.js';
 
 function playing() {const game=newGame();game.status='playing';game.board=Array(36).fill('smile');return game;}
 
@@ -77,4 +77,15 @@ test('later rooms only target faces that are actually on their board',()=>{
   for(let level=1;level<=100;level++) {
     const config=levelConfig(level);assert.ok(Object.keys(config.goals).every(id=>config.types.includes(id)));assert.ok(config.types.length<=8);assert.equal(config.moves,20);
   }
+});
+test('saved rounds restore exact board, progress, score and resources without restoring pause',()=>{
+  const game=clearCells(playing(),[0,1,2]);game.status='paused';
+  const restored=restoreGame(JSON.parse(JSON.stringify(game)));
+  assert.deepEqual(restored,{...game,status:'playing'});
+  restored.board[0]=game.board[0]==='smile'?'love':'smile';restored.collected.smile++;
+  assert.notDeepEqual(restored.board,game.board);assert.equal(game.collected.smile,3);
+});
+test('corrupted, completed and incompatible saves do not restore',()=>{
+  const game=playing();
+  for(const bad of [null,{}, {...game,status:'won'}, {...game,moves:0}, {...game,moves:21}, {...game,score:-1}, {...game,charge:18}, {...game,buzzes:4}, {...game,board:['smile']}, {...game,board:Array(36).fill('missing')}, {...game,collected:{smile:0}}, {...game,collected:{smile:12,love:9,laugh:9}}])assert.equal(restoreGame(bad),null);
 });

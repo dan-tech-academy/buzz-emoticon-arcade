@@ -8,14 +8,21 @@ export const EMOTES = [
   { id:'tongue', name:'Tinh nghịch', code:':P', color:'#e2edff' },
   { id:'angel', name:'Thiên thần', code:'O:-)', color:'#fff5d9' },
   { id:'devil', name:'Tiểu quỷ', code:'>:)', color:'#eadcfa' },
-  { id:'cry', name:'Khóc nhè', code:'=((', color:'#e0efff' },
+  { id:'cry', name:'Bật khóc', code:'=((', color:'#e0efff' },
   { id:'grin', name:'Cười toe', code:':D', color:'#fff1c2' },
-  { id:'sad', name:'Buồn xíu', code:':(', color:'#e5eaf6' },
+  { id:'sad', name:'Buồn bã', code:':(', color:'#e5eaf6' },
   { id:'hug', name:'Ôm một cái', code:'>:D<', color:'#ffe4dc' },
   { id:'sleep', name:'Buồn ngủ', code:'I-)', color:'#e8e5ff' },
-  { id:'party', name:'Tiệc thôi', code:'<:-P', color:'#ffe3ed' },
+  { id:'party', name:'Ăn mừng', code:'<:-P', color:'#ffe3ed' },
   { id:'clap', name:'Vỗ tay', code:'=D>', color:'#dff4e9' },
-  { id:'wave', name:'Xin chào', code:':-h', color:'#e4f3f4' }
+  { id:'wave', name:'Xin chào', code:':-h', color:'#e4f3f4' },
+  { id:'cowboy', name:'Cao bồi', code:'<):)', color:'#fff0cb' },
+  { id:'daydream', name:'Mơ mộng', code:'8->', color:'#fff0dd' },
+  { id:'rolling', name:'Cười lăn lộn', code:'=))', color:'#ffe7c9' },
+  { id:'talk', name:'Thôi đủ rồi', code:':-t', color:'#e9e4f8' },
+  { id:'drool', name:'Thèm quá', code:'=P~', color:'#e2f1e5' },
+  { id:'clown', name:'Chú hề', code:':O)', color:'#ffe3e5' },
+  { id:'sick', name:'Buồn nôn', code:':-&', color:'#e3efcf' }
 ];
 export const LEVEL_NAMES = ['Bạn cũ, cảm xúc mới', 'Một thời nick sáng đèn', 'Gửi ngàn thương nhớ', 'Hội bạn không ngủ', 'Ký ức luôn online'];
 export function levelConfig(level) {
@@ -67,6 +74,17 @@ export function chainScore(length) { return length * 30 + Math.max(0,length-3) *
 export function newGame(level = 1) {
   const config=levelConfig(level);
   return { level, ...config, board:createBoard(config.types), collected:Object.fromEntries(Object.keys(config.goals).map(id=>[id,0])), score:0, charge:0, buzzes:1, status:'ready' };
+}
+export function restoreGame(round) {
+  if(!round || !Number.isInteger(round.level) || round.level<1 || round.level>10000 || !['playing','paused'].includes(round.status)) return null;
+  const config=levelConfig(round.level);
+  if(!Array.isArray(round.board) || round.board.length!==SIZE*SIZE || !round.board.every(id=>config.types.includes(id))) return null;
+  for(const [key,min,max] of [['moves',1,config.moves],['score',0,1e9],['charge',0,17],['buzzes',0,3]]) {
+    if(!Number.isInteger(round[key]) || round[key]<min || round[key]>max)return null;
+  }
+  if(!round.collected || !Object.keys(config.goals).every(id=>Number.isInteger(round.collected[id]) && round.collected[id]>=0 && round.collected[id]<=SIZE*SIZE*config.moves))return null;
+  if(Object.keys(config.goals).every(id=>round.collected[id]>=config.goals[id]))return null;
+  return { ...newGame(round.level), ...config, board:[...round.board], moves:round.moves, score:round.score, charge:round.charge, buzzes:round.buzzes, collected:Object.fromEntries(Object.keys(config.goals).map(id=>[id,round.collected[id]])), status:'playing' };
 }
 export function clearCells(state, cells, isBuzz = false) {
   if(state.status !== 'playing' || (!isBuzz && !validChain(state.board,cells))) return state;

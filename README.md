@@ -19,8 +19,8 @@ npm start       # production server on 4173; override with PORT
 - Longer chains earn bonus points. Complete all three goals before the 20 moves run out.
 - **BUZZ!** clears a 3×3 area for one move. Start with one charge; collect 18 regular faces to recharge (up to three).
 - Hints are free; shuffling costs one move. The board always contains a valid chain.
-- Win to advance to a harder room and unlock another of the 16 supplied faces.
-- Best score, collection, and sound preference stay in this browser's local storage. The active round resets on reload. No personal data is sent anywhere.
+- Win to advance to a harder room and unlock another of the 23 supplied faces.
+- The active round, best score, collection, and sound preference stay in this browser's local storage. Reloading resumes the last unfinished round. No personal data is sent anywhere.
 - Arrow keys move grid focus, Enter selects, Space sends, and Escape cancels a selection or closes a dialog. `?` opens the instructions.
 
 The optional Google Font has a system fallback. The supplied sprites are cropped and isolated as PNGs in `public/emotes/`. They are user-provided nostalgic artwork; this project is not affiliated with Yahoo and does not claim ownership of the original emoticons.
