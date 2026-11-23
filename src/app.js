@@ -1,4 +1,4 @@
-import { EMOTES, SIZE, LEVEL_NAMES, newGame, restoreGame, adjacent, findChain, createBoard, clearCells, buzzArea } from './engine.js';
+import { EMOTES, SIZE, LEVEL_NAMES, newGame, restoreGame, adjacent, findChain, createBoard, ensureGoalFaces, clearCells, buzzArea } from './engine.js';
 
 const $ = id => document.getElementById(id);
 const emote = id => EMOTES.find(e=>e.id===id);
@@ -130,10 +130,12 @@ async function submit(cells=chain,isBuzz=false) {
   if(isBuzz){const room=document.querySelector('main');room.classList.remove('room-buzz');void room.offsetWidth;room.classList.add('room-buzz');setTimeout(()=>room.classList.remove('room-buzz'),850);}
   tone(isBuzz?130:720,isBuzz?.35:.15,isBuzz?'sawtooth':'sine');
   state=next;const gained=state.score-previous.score;
+  const winBonus=state.status==='won'?state.moves*50:0;
   if(state.score>best)best=state.score;
   save();
   render();
-  addChat(isBuzz?'BUZZ!!! Có ai ở đây không?':`Đã gửi ${cells.length} mặt ${emote(previous.board[cells[0]]).name.toLowerCase()}. +${format(gained)} điểm`,true,isBuzz?null:previous.board[cells[0]]);
+  addChat(isBuzz?`BUZZ!!! Có ai ở đây không? +${format(gained-winBonus)} điểm`:`Đã gửi ${cells.length} mặt ${emote(previous.board[cells[0]]).name.toLowerCase()}. +${format(gained-winBonus)} điểm`,true,isBuzz?null:previous.board[cells[0]]);
+  if(winBonus)addChat(`Thưởng ${state.moves} lượt còn lại × 50 = +${format(winBonus)} điểm.`,false,'clap');
   if(!isBuzz&&cells.length>=5){toast(`Nối được ${cells.length} mặt! Cả hội cười theo ✦`);addChat('Đỉnh vậy! Đúng là cao thủ Yahoo năm ấy.',false,'cool');}
   else if(isBuzz)toast('BUZZ! Cả phòng đã nghe thấy bạn!');
   else if(state.buzzes>previous.buzzes)toast('Đầy năng lượng! Bạn có thêm một lượt BUZZ!');
@@ -142,10 +144,14 @@ async function submit(cells=chain,isBuzz=false) {
   busy=false;renderStats();
   if(state.status==='won'||state.status==='lost') showResult();
 }
-function shuffle() {
+function shuffle(confirmed=false) {
   if(state.status!=='playing'||busy) return;
+  if(state.moves===1&&!confirmed){
+    openModal('shuffle-confirm','<span class="modal-eyebrow">CÒN LƯỢT CUỐI</span><h2 class="modal-title" id="modal-title">Đảo bảng sẽ hết lượt.</h2><p class="modal-intro">Bạn sẽ thua phòng này nếu dùng lượt cuối để đảo bảng. Thử Gợi ý miễn phí trước nhé?</p><div class="result-actions"><button class="primary" id="keep-playing">Chơi tiếp</button><button class="secondary" id="confirm-shuffle">Vẫn đảo bảng</button></div>');
+    $('keep-playing').onclick=closeModal;$('confirm-shuffle').onclick=()=>{closeModal();shuffle(true);};return;
+  }
   const wasArmed=armed;
-  chain=[];armed=false;clearHint();state.board=createBoard(state.types);state.moves--;
+  chain=[];armed=false;clearHint();state.board=ensureGoalFaces(createBoard(state.types),state.goals,state.collected);state.moves--;
   if(state.moves<=0)state.status='lost';save();render();tone(330,.16);toast(`Đã đảo bảng. −1 lượt.${wasArmed?' Đã hủy chọn BUZZ!, năng lượng vẫn còn.':''}`);
   if(state.status==='lost')showResult();
 }
@@ -207,8 +213,8 @@ document.addEventListener('pointermove',event=>{
 document.addEventListener('pointerup',()=>{dragging=false;dragStart=null;});
 document.addEventListener('pointercancel',()=>{dragging=false;dragStart=null;});
 $('board').addEventListener('click',event=>{if(event.detail===0){const tile=event.target.closest('.tile');if(tile)select(Number(tile.dataset.index));}});
-$('start-button').onclick=()=>start();$('send-button').onclick=()=>submit();$('shuffle-button').onclick=shuffle;
-$('hint-button').onclick=()=>{if(state.status!=='playing'||busy)return;const wasArmed=armed;armed=false;clearHint();chain=findChain(state.board)||[];renderStats();chain.forEach(i=>$('board').children[i].classList.add('hinted'));toast(`Đã chọn sẵn một chuỗi. Nhấn Gửi cảm xúc!${wasArmed?' BUZZ! chưa bị sử dụng.':''}`);};
+$('start-button').onclick=()=>start();$('send-button').onclick=()=>submit();$('shuffle-button').onclick=()=>shuffle();
+$('hint-button').onclick=()=>{if(state.status!=='playing'||busy)return;const wasArmed=armed;armed=false;clearHint();const needed=Object.keys(state.goals).filter(id=>state.collected[id]<state.goals[id]);chain=findChain(state.board,3,needed)||findChain(state.board)||[];renderStats();chain.forEach(i=>$('board').children[i].classList.add('hinted'));toast(`Đã chọn chuỗi cần cho nhiệm vụ. Nhấn Gửi cảm xúc!${wasArmed?' BUZZ! chưa bị sử dụng.':''}`);};
 $('buzz-button').onclick=()=>{if(state.status!=='playing'||!state.buzzes||busy)return;armed=!armed;chain=[];clearHint();renderStats();toast(armed?'Chọn một ô để rung vùng 3×3. Bấm BUZZ! lần nữa để hủy.':'Đã hủy chọn BUZZ! Chưa dùng lượt hay năng lượng.');};
 $('sound-button').onclick=()=>{sound=!sound;soundUI();save();tone(650,.12);toast(sound?'Đã bật âm thanh':'Đã tắt âm thanh');};
 $('pause-button').onclick=pause;$('help-nav').onclick=showHelp;$('more-help').onclick=showHelp;$('collection-nav').onclick=showCollection;

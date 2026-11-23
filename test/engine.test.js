@@ -89,3 +89,15 @@ test('corrupted, completed and incompatible saves do not restore',()=>{
   const game=playing();
   for(const bad of [null,{}, {...game,status:'won'}, {...game,moves:0}, {...game,moves:21}, {...game,score:-1}, {...game,charge:18}, {...game,buzzes:4}, {...game,board:['smile']}, {...game,board:Array(36).fill('missing')}, {...game,collected:{smile:0}}, {...game,collected:{smile:12,love:9,laugh:9}}])assert.equal(restoreGame(bad),null);
 });
+test('every active board has unfinished goal faces and a matching goal chain',()=>{
+  for(let run=0;run<100;run++){
+    let game=newGame(1+run%20);game.status='playing';
+    while(game.status==='playing'){
+      const needed=Object.keys(game.goals).filter(id=>game.collected[id]<game.goals[id]);
+      assert.ok(needed.every(id=>game.board.includes(id)));
+      const hint=findChain(game.board,3,needed);
+      assert.ok(hint);assert.ok(validChain(game.board,hint));
+      game=clearCells(game,hint);
+    }
+  }
+});

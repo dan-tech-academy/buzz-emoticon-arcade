@@ -33,7 +33,7 @@ export function levelConfig(level) {
 export function adjacent(a,b) {
   return a !== b && Math.abs(a % SIZE - b % SIZE) <= 1 && Math.abs(Math.floor(a / SIZE) - Math.floor(b / SIZE)) <= 1;
 }
-export function findChain(board, min = 3) {
+export function findChain(board, min = 3, only = null) {
   function walk(path) {
     if (path.length >= min) return path;
     const last = path.at(-1);
@@ -45,8 +45,25 @@ export function findChain(board, min = 3) {
     }
     return null;
   }
-  for(let i=0; i<board.length; i++) { const found=walk([i]); if(found) return found; }
+  for(let i=0; i<board.length; i++) { if(only&&!only.includes(board[i]))continue;const found=walk([i]); if(found) return found; }
   return null;
+}
+export function ensureGoalFaces(board,goals,collected) {
+  const next=[...board], pending=Object.keys(goals).filter(id=>(collected[id]||0)<goals[id]).sort((a,b)=>(goals[b]-(collected[b]||0))-(goals[a]-(collected[a]||0)));
+  if(!pending.length)return next;
+  const count=id=>next.filter(face=>face===id).length;
+  for(const id of pending)if(!next.includes(id)){
+    const replace=next.findIndex(old=>!pending.includes(old)||count(old)>1);
+    next[replace]=id;
+  }
+  if(findChain(next,3,pending))return next;
+  // Keep the last copy of every other required face when repairing a dead goal chain.
+  for(let row=0;row<SIZE;row++)for(let col=0;col<SIZE-2;col++){
+    const cells=[row*SIZE+col,row*SIZE+col+1,row*SIZE+col+2];
+    if(pending.slice(1).some(id=>count(id)===cells.filter(i=>next[i]===id).length))continue;
+    cells.forEach(i=>next[i]=pending[0]);return next;
+  }
+  return next;
 }
 export function createBoard(types, random = Math.random) {
   const board = Array.from({length:SIZE*SIZE},()=>types[Math.floor(random()*types.length)]);
@@ -73,7 +90,8 @@ export function buzzArea(cell) {
 export function chainScore(length) { return length * 30 + Math.max(0,length-3) * 20; }
 export function newGame(level = 1) {
   const config=levelConfig(level);
-  return { level, ...config, board:createBoard(config.types), collected:Object.fromEntries(Object.keys(config.goals).map(id=>[id,0])), score:0, charge:0, buzzes:1, status:'ready' };
+  const collected=Object.fromEntries(Object.keys(config.goals).map(id=>[id,0]));
+  return { level, ...config, board:ensureGoalFaces(createBoard(config.types),config.goals,collected), collected, score:0, charge:0, buzzes:1, status:'ready' };
 }
 export function restoreGame(round) {
   if(!round || !Number.isInteger(round.level) || round.level<1 || round.level>10000 || !['playing','paused'].includes(round.status)) return null;
@@ -98,7 +116,7 @@ export function clearCells(state, cells, isBuzz = false) {
   const earned=state.charge + (isBuzz ? 0 : cells.length);
   const moves=state.moves-1;
   const won=Object.keys(state.goals).every(id=>collected[id] >= state.goals[id]);
-  return { ...state, board:collapse(state.board,cells,state.types), collected, moves,
+  return { ...state, board:ensureGoalFaces(collapse(state.board,cells,state.types),state.goals,collected), collected, moves,
     score:state.score+(isBuzz?cells.length*30:chainScore(cells.length))+(won?moves*50:0),
     charge:earned%18, buzzes:Math.min(3,state.buzzes-(isBuzz?1:0)+Math.floor(earned/18)),
     status:won?'won':moves<=0?'lost':'playing' };
