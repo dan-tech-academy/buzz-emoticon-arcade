@@ -1,4 +1,5 @@
 import {createGame,step,equip,respawn,WEAPONS,STAGES} from './engine.js';
+import {mergeProgress} from './progress.js';
 import {createRenderer} from './renderer.js';
 const $=id=>document.getElementById(id),canvas=$('game'),modal=$('modal');
 const keys=new Set(),pressed=new Set(),touches=new Map();
@@ -14,9 +15,9 @@ function readSave(){try{const data=JSON.parse(localStorage.getItem('buzz-action-
 let saved=readSave();
 try{sound=localStorage.getItem('buzz-action-sound')!=='false';}catch{}
 game=createGame(saved.level,saved);
-function saveProgress(){
+function saveProgress(intent='keep'){
   // Merge permanent unlocks with other tabs; audio preferences use a separate key.
-  const newer=readSave();saved={owned:[...new Set([...newer.owned,...game.owned])],equipped:game.equipped,level:game.status==='cleared'?Math.min(2,game.level+1):game.level,best:Math.max(newer.best,game.score)};
+  saved=mergeProgress(readSave(),game,intent);
   try{localStorage.setItem('buzz-action-v1',JSON.stringify(saved));}catch{}
 }
 function saveRecord(){
@@ -38,9 +39,9 @@ function addModalEquipment(){
 }
 function controls(){return isTouch()?{run:'Giữ ◀ / ▶ bằng tay trái.',jump:'Tay phải chạm NHẢY.',attack:'Chạm TỰ ĐÁNH để bật / tắt đánh liên tục.',dash:'Chạm LƯỚT để né đạn.',buzz:'Chạm BUZZ! để tung sóng.',equip:'Chạm Kho emoji hoặc ô emoji',retry:'Tay trái giữ ◀ / ▶, tay phải chạm NHẢY. Bật TỰ ĐÁNH để rảnh tay né đòn.',intro:'Tay trái di chuyển · Tay phải NHẢY / LƯỚT.<br/>Chạm TỰ ĐÁNH một lần để bật đánh liên tục.'}:{run:'A D / ← → để chạy.',jump:'Space / W / ↑ để nhảy.',attack:'Giữ J để dùng chiêu emoji.',dash:'K / Shift lướt, né đạn.',buzz:'E / L tung sóng đẩy lùi.',equip:'Bấm Kho emoji hoặc phím 1–4',retry:'Thử nhảy đôi qua vực, giữ J để đánh và dùng K để né đòn.',intro:'A D chạy · Space nhảy · J đánh · K lướt · E BUZZ!'};}
 function closeModal(){modal.close();mode='playing';clearInput();canvas.focus({preventScroll:true});}
-function start(level=game.level){game=createGame(level,{...readSave(),score:0,collected:0,equipped:game.equipped});touchAutoAttack=false;document.querySelector('[data-action="attack"]').setAttribute('aria-pressed','false');renderer.reset();closeModal();saveProgress();renderWeapons();updateHUD();activateAudio();notify(STAGES[level].subtitle);}
+function start(level=game.level){game=createGame(level,{...readSave(),score:0,collected:0,equipped:game.equipped});touchAutoAttack=false;document.querySelector('[data-action="attack"]').setAttribute('aria-pressed','false');renderer.reset();closeModal();saveProgress('restart');renderWeapons();updateHUD();activateAudio();notify(STAGES[level].subtitle);}
 function nextStage(equipReward=true){
-  if(equipReward)equip(game,STAGES[game.level].reward);saveProgress();
+  if(equipReward)equip(game,STAGES[game.level].reward);saveProgress('advance');
   if(game.level===2){start(0);return;}
   game=createGame(game.level+1,game);renderer.reset();closeModal();saveProgress();renderWeapons();updateHUD();notify(STAGES[game.level].subtitle);
 }
@@ -64,7 +65,7 @@ function collection(){
   $('collection-close').onclick=()=>wasPlaying?closeModal():welcome();
 }
 function result(){
-  saveProgress();renderWeapons();updateHUD();
+  saveProgress(game.status==='cleared'?'advance':'keep');renderWeapons();updateHUD();
   if(game.status==='dead'){
     showModal(`<span class="modal-eyebrow">NGÃ Ở ĐÂU, ĐỨNG DẬY Ở ĐÓ</span><h2>Chưa hết <em>chiến.</em></h2><p>${game.checkpointActive?'Cờ hồi sinh đã giữ vị trí của bạn.':controls().retry}<br/>Điểm: <b>${game.score.toLocaleString('vi')}</b> · Đã hạ ${game.kills} quái.</p><div class="modal-actions"><button class="primary" id="retry-button">Hồi sinh ${game.checkpointActive?'tại cờ':'đầu màn'} →</button><button id="retry-stage">Chơi lại màn</button></div>`,'dead');
     $('retry-button').onclick=()=>{respawn(game);closeModal();updateHUD();};$('retry-stage').onclick=()=>start(game.level);return;
