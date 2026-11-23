@@ -72,3 +72,7 @@ test('fireballs cannot damage a boss before entering the arena',()=>{
   step(g,{attack:true},1/60);advance(g,55);assert.equal(g.bossActive,false);assert.equal(boss.hp,boss.maxHp);assert.equal(g.status,'playing');
   g.bossActive=true;hitEnemy(g,boss,1);assert.equal(boss.hp,boss.maxHp-1);
 });
+test('ice cannot apply a status effect to an inactive boss',()=>{
+  const g=createGame(1,{owned:['cool'],equipped:'cool'}),boss=g.enemies.at(-1);g.enemies=[boss];Object.assign(g.player,{x:3420,y:414});boss.x=3830;
+  step(g,{attack:true},1/60);advance(g,55);assert.equal(boss.slow,0);assert.equal(boss.hp,boss.maxHp);
+});

@@ -43,7 +43,7 @@ export function hurtPlayer(g,damage=1,direction=-1){
   if(!p.hp){g.status='dead';emit(g,'dead');}return true;
 }
 export function hitEnemy(g,e,damage,direction=1){
-  if(e.hp<=0||g.status!=='playing'||(e.boss&&!g.bossActive))return;
+  if(e.hp<=0||g.status!=='playing'||(e.boss&&!g.bossActive))return false;
   e.hp=Math.max(0,e.hp-damage);e.flash=.17;e.x+=direction*(e.boss?7:22);g.player.energy=Math.min(100,g.player.energy+5);
   emit(g,'hit',{boss:e.boss});effect(g,'burst',e.x+e.w/2,e.y+e.h/2,WEAPONS[g.equipped].color);
   if(e.hp<=0){
@@ -52,6 +52,7 @@ export function hitEnemy(g,e,damage,direction=1){
     if(g.equipped==='angel')g.player.hp=Math.min(g.player.maxHp,g.player.hp+1);
     if(e.boss){const reward=STAGES[g.level].reward;if(!g.owned.includes(reward))g.owned.push(reward);g.status='cleared';g.score+=g.player.hp*150;emit(g,'reward',{id:reward});}
   }
+  return true;
 }
 function attack(g){
   const p=g.player,w=g.equipped;if(p.attackCooldown>0)return;p.attack=.2;p.attackCooldown=w==='smile'?.27:.36;emit(g,'attack',{weapon:w});
@@ -107,7 +108,7 @@ export function step(g,input,dt){
     if(overlaps(p,e)){if(p.dash>0&&e.dashHit!==p.id){e.dashHit=p.id;hitEnemy(g,e,2,p.face);}else if(p.vy>120&&p.y+p.h<e.y+28&&!e.boss){hitEnemy(g,e,2,p.face);p.y=e.y-p.h;p.vy=-430;p.jumps=1;}else hurtPlayer(g,1,Math.sign(p.x-e.x)||-1);}
   }
   for(const b of g.projectiles){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
-    if(b.friendly){for(const e of g.enemies)if(e.hp>0&&overlaps(b,e)){if(b.face==='cool')e.slow=2;hitEnemy(g,e,b.damage,Math.sign(b.vx));b.life=0;break;}}
+    if(b.friendly){for(const e of g.enemies)if(e.hp>0&&overlaps(b,e)){const hit=hitEnemy(g,e,b.damage,Math.sign(b.vx));if(hit&&b.face==='cool')e.slow=2;b.life=0;break;}}
     else if(overlaps(b,p)){hurtPlayer(g,1,Math.sign(b.vx));b.life=0;}}
   g.projectiles=g.projectiles.filter(b=>b.life>0&&b.x>-80&&b.x<g.width+80);
 }
