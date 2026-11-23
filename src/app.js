@@ -7,7 +7,7 @@ const imageIds=['smile','wink','love','laugh','cry','devil','cool','angel','part
 const images=Object.fromEntries(imageIds.map(id=>{const img=new Image();img.src=`/emotes/${id}.png`;return[id,img];}));
 const renderer=createRenderer(canvas,images);
 const validOwned=value=>Array.isArray(value)?value.filter(id=>Object.hasOwn(WEAPONS,id)):[];
-function readSave(){try{const data=JSON.parse(localStorage.getItem('buzz-action-v1'))||{};return {owned:validOwned(data.owned),equipped:Object.hasOwn(WEAPONS,data.equipped)?data.equipped:'smile',level:Number.isInteger(data.level)&&data.level>=0&&data.level<3?data.level:0,best:Number.isFinite(data.best)?Math.max(0,data.best):0};}catch{return {owned:['smile'],equipped:'smile',level:0,best:0};}}
+function readSave(){try{const data=JSON.parse(localStorage.getItem('buzz-action-v1'))||{},record=Number(localStorage.getItem('buzz-action-best'));return {owned:validOwned(data.owned),equipped:Object.hasOwn(WEAPONS,data.equipped)?data.equipped:'smile',level:Number.isInteger(data.level)&&data.level>=0&&data.level<3?data.level:0,best:Math.max(0,Number.isFinite(data.best)?data.best:0,Number.isFinite(record)?record:0)};}catch{return {owned:['smile'],equipped:'smile',level:0,best:0};}}
 let saved=readSave();
 try{sound=localStorage.getItem('buzz-action-sound')==='true';}catch{}
 game=createGame(saved.level,saved);
@@ -15,6 +15,11 @@ function saveProgress(){
   // Merge permanent unlocks with other tabs; audio preferences use a separate key.
   const newer=readSave();saved={owned:[...new Set([...newer.owned,...game.owned])],equipped:game.equipped,level:game.status==='cleared'?Math.min(2,game.level+1):game.level,best:Math.max(newer.best,game.score)};
   try{localStorage.setItem('buzz-action-v1',JSON.stringify(saved));}catch{}
+}
+function saveRecord(){
+  // Exiting an older tab may update the record, never stage or equipment.
+  const best=Math.max(readSave().best,game.score);saved.best=best;
+  try{localStorage.setItem('buzz-action-best',String(best));}catch{}
 }
 function activateAudio(){if(!sound)return;try{audio??=new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume().catch(()=>{});}catch{}}
 function tone(hz,duration=.08,type='sine',volume=.06){if(!sound||!audio)return;try{const osc=audio.createOscillator(),gain=audio.createGain();osc.type=type;osc.frequency.setValueAtTime(hz,audio.currentTime);osc.frequency.exponentialRampToValueAtTime(Math.max(30,hz*.5),audio.currentTime+duration);gain.gain.setValueAtTime(volume,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);osc.connect(gain).connect(audio.destination);osc.start();osc.stop(audio.currentTime+duration);}catch{}}
@@ -101,7 +106,7 @@ document.querySelectorAll('[data-action]').forEach(button=>{
   const release=event=>{touches.delete(event.pointerId);if(![...touches.values()].includes(button.dataset.action))button.classList.remove('held');};
   button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
 });
-window.addEventListener('blur',()=>{clearInput();pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();pause();}});
+window.addEventListener('blur',()=>{clearInput();pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){saveRecord();clearInput();pause();}});
 modal.addEventListener('cancel',event=>{event.preventDefault();if(mode==='welcome')return;if(mode==='dead'||mode==='reward')return;if(mode==='help'||mode==='collection'){if(wasPlaying)closeModal();else welcome();}else closeModal();});
 $('pause-button').onclick=pause;$('help-button').onclick=()=>{if(mode==='playing'||mode==='welcome')help();};$('collection-button').onclick=collection;
 $('sound-button').onclick=()=>{sound=!sound;try{localStorage.setItem('buzz-action-sound',String(sound));}catch{}activateAudio();tone(600);updateHUD();};
