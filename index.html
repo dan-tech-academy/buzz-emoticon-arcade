@@ -17,13 +17,14 @@
       <a class="brand" href="/" aria-label="BUZZ! Trang chủ">BUZZ<span>!</span><small>NGƯỜI QUE PHÁ ĐẢO</small></a>
       <div class="top-actions"><button id="collection-button">Kho emoji <span id="owned-count">1/4</span></button><button id="sound-button" aria-label="Bật âm thanh" title="Bật âm thanh">Âm thanh: tắt</button><button id="help-button" aria-label="Cách chơi">?</button></div>
     </header>
-    <section class="heading"><div><span class="eyebrow">HẠ BOSS. THU PHỤC EMOJI. ĐỔI CHIÊU.</span><h1>Không chat nữa. <em>Chiến thôi.</em></h1></div><div class="stage-label"><span id="stage-number">MÀN 01 / 03</span><b id="stage-name">Phố nick sáng đèn</b></div></section>
+    <section class="heading"><div><span class="eyebrow">HẠ BOSS. THU PHỤC EMOJI. ĐỔI CHIÊU.</span><h1>Không chat nữa. <em>Chiến thôi.</em></h1></div>
+      <button id="attack-button" class="attack-button" type="button" data-auto-attack aria-pressed="false" aria-label="Tấn công. Bấm để bật tự đánh, hoặc giữ J hay X."><kbd aria-hidden="true">J</kbd><span><b id="attack-label">TẤN CÔNG</b><small id="attack-hint">Giữ J / X · hoặc bấm để tự đánh</small></span></button>
+    <div class="stage-label"><span id="stage-number">MÀN 01 / 03</span><b id="stage-name">Phố nick sáng đèn</b></div></section>
     <section class="game-frame" aria-label="Sân chơi người que đi cảnh">
       <div class="hud"><div class="vitals"><div id="hearts" aria-label="5 trên 5 tim">♥ ♥ ♥ ♥ ♥</div><div class="energy"><span>BUZZ!</span><div><i id="energy-bar"></i></div><b id="energy-label">Sẵn sàng</b></div></div><div class="hud-right"><div><small>ĐIỂM</small><strong id="score">000000</strong></div><button id="pause-button" aria-label="Tạm dừng">Ⅱ</button></div></div>
       <div id="boss-hud" class="boss-hud" hidden><div><b id="boss-name">Quỷ Spam</b><span id="boss-phase">TRẬN BOSS</span></div><div class="boss-track"><i id="boss-bar"></i></div></div>
       <canvas id="game" tabindex="0" aria-label="Game đi cảnh. A D hoặc mũi tên để chạy, Space nhảy đôi, J đánh, K lướt, E BUZZ. Hạ boss để thu phục emoji.">Trình duyệt cần hỗ trợ Canvas để chơi.</canvas>
       <div id="announcement" class="announcement" role="status" aria-live="polite"></div>
-      <button id="attack-button" class="attack-button" type="button" data-auto-attack aria-pressed="false" aria-label="Tấn công. Bấm để bật tự đánh, hoặc giữ J hay X."><kbd aria-hidden="true">J</kbd><span><b id="attack-label">TẤN CÔNG</b><small id="attack-hint">Giữ J / X · hoặc bấm để tự đánh</small></span></button>
       <div class="progress-track"><i id="progress"></i><span id="stage-objective">Hạ Quỷ Spam → nhận Quỷ lửa</span></div>
     </section>
     <div class="touch-controls" aria-label="Tay trái di chuyển, tay phải nhảy"><div class="move-buttons"><button data-action="left" aria-label="Chạy trái">◀</button><button data-action="right" aria-label="Chạy phải">▶</button></div><div class="action-buttons"><button data-action="dash" aria-label="Lướt">LƯỚT</button><button data-action="buzz" class="touch-buzz" aria-label="BUZZ">BUZZ!</button><button data-action="attack" data-auto-attack class="touch-attack" aria-label="Bật hoặc tắt tự đánh" aria-pressed="false">TỰ<br/>ĐÁNH</button><button data-action="jump" class="touch-jump" aria-label="Nhảy">NHẢY</button></div></div>
