@@ -107,7 +107,6 @@ function updateHUD(){
   $('sound-button').textContent=`Âm thanh: ${sound?'bật':'tắt'}`;$('sound-button').setAttribute('aria-label',sound?'Tắt âm thanh':'Bật âm thanh');$('sound-button').title=sound?'Tắt âm thanh':'Bật âm thanh';
   const boss=game.enemies.find(e=>e.boss);$('boss-hud').hidden=!game.bossActive||boss.hp<=0;$('boss-name').textContent=STAGES[game.level].boss;$('boss-bar').style.width=`${boss.hp/boss.maxHp*100}%`;$('boss-phase').textContent=boss.hp<=0?'ĐÃ HẠ':boss.hp<boss.maxHp/2?'NỔI GIẬN!':'TRẬN BOSS';
   $('stage-objective').textContent=`Hạ ${STAGES[game.level].boss} → nhận ${WEAPONS[STAGES[game.level].reward].name}`;
-  setAutoAttack(autoAttack);
 }
 function events(){for(const event of game.events){
   if(event.type==='jump')tone(380,.1,'sine',.04);
