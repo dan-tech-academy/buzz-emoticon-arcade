@@ -3,7 +3,7 @@ import {mergeProgress} from './progress.js';
 import {createRenderer} from './renderer.js';
 const $=id=>document.getElementById(id),canvas=$('game'),modal=$('modal');
 const keys=new Set(),pressed=new Set(),touches=new Map();
-let game,mode='welcome',audio,sound=true,wasPlaying=false,noticeTimer,frameTime=0,accumulator=0,hudTimer=0,touchAutoAttack=false;
+let game,mode='welcome',audio,sound=true,wasPlaying=false,noticeTimer,frameTime=0,accumulator=0,hudTimer=0,autoAttack=false;
 // Match the visible touch layout, not merely touchscreen hardware capability.
 let previousTouchLayout;
 const isTouch=()=>Boolean(previousTouchLayout);
@@ -11,10 +11,10 @@ function syncInputLayout(){
   document.body.classList.toggle('has-touch',navigator.maxTouchPoints>0);
   const touch=getComputedStyle(document.querySelector('.touch-controls')).display!=='none';
   document.body.classList.toggle('touch-device',touch);
-  if(previousTouchLayout!==undefined&&previousTouchLayout!==touch){clearInput();touchAutoAttack=false;document.querySelector('[data-action="attack"]').setAttribute('aria-pressed','false');}
+  if(previousTouchLayout!==undefined&&previousTouchLayout!==touch){clearInput();setAutoAttack(false);}
   previousTouchLayout=touch;
   document.querySelectorAll('[data-control-copy]').forEach(node=>{node.innerHTML=controlLabel(node.dataset.controlCopy);});
-  canvas.setAttribute('aria-label',touch?'Người que đi cảnh. Tay trái giữ nút chạy; tay phải nhảy, lướt hoặc BUZZ. Chạm Tự đánh để bật đánh liên tục. Hạ boss để thu phục emoji.':'Người que đi cảnh. A D chạy, Space nhảy đôi, J đánh, K lướt, E BUZZ. Hạ boss để thu phục emoji.');
+  canvas.setAttribute('aria-label',touch?'Người que đi cảnh. Tay trái giữ nút chạy; tay phải nhảy, lướt hoặc BUZZ. Chạm Tự đánh để bật đánh liên tục. Hạ boss để thu phục emoji.':'Người que đi cảnh. A D chạy, Space nhảy đôi, giữ J hoặc X để đánh, K lướt, E BUZZ. Bấm Tấn công để bật hoặc tắt tự đánh. Hạ boss để thu phục emoji.');
 }
 syncInputLayout();window.addEventListener('resize',syncInputLayout);matchMedia('(pointer:coarse)').addEventListener('change',syncInputLayout);
 const imageIds=['smile','wink','love','laugh','cry','devil','cool','angel','party','clap'];
@@ -38,7 +38,15 @@ function saveRecord(){
 function activateAudio(){if(!sound)return;try{audio??=new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume().catch(()=>{});}catch{}}
 function tone(hz,duration=.08,type='sine',volume=.06){if(!sound||!audio)return;try{const osc=audio.createOscillator(),gain=audio.createGain();osc.type=type;osc.frequency.setValueAtTime(hz,audio.currentTime);osc.frequency.exponentialRampToValueAtTime(Math.max(30,hz*.5),audio.currentTime+duration);gain.gain.setValueAtTime(volume,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);osc.connect(gain).connect(audio.destination);osc.start();osc.stop(audio.currentTime+duration);}catch{}}
 function notify(text){$('announcement').textContent=text;$('announcement').classList.add('show');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('announcement').classList.remove('show'),2200);}
-function clearInput(){keys.clear();pressed.clear();touches.clear();document.querySelectorAll('[data-action]').forEach(b=>b.classList.remove('held'));}
+function setAutoAttack(enabled){
+  autoAttack=enabled;
+  document.querySelectorAll('[data-auto-attack]').forEach(button=>{button.classList.toggle('held',enabled);button.setAttribute('aria-pressed',String(enabled));});
+  $('attack-label').textContent=enabled?'TỰ ĐÁNH: BẬT':'TẤN CÔNG';
+  $('attack-hint').textContent=enabled?'Bấm lần nữa để tắt':'Giữ J/X · hoặc bấm';
+  $('attack-button').setAttribute('aria-label',enabled?'Tự đánh: bật. Bấm để tắt.':'Tấn công. Bấm để bật tự đánh, hoặc giữ J hay X.');
+}
+function toggleAutoAttack(){setAutoAttack(!autoAttack);notify(autoAttack?'Tự đánh đang bật. Rảnh tay để nhảy!':'Đã tắt tự đánh.');}
+function clearInput(){keys.clear();pressed.clear();touches.clear();document.querySelectorAll('[data-action]').forEach(b=>b.classList.remove('held'));setAutoAttack(autoAttack);}
 function showModal(html,kind){clearInput();mode=kind;$('modal-content').innerHTML=html;const title=$('modal-content').querySelector('h2');if(title)title.id='modal-title';if(kind==='paused'||kind==='dead')addModalEquipment();if(!modal.open)modal.showModal();if(title&&(kind==='dead'||kind==='reward')){title.tabIndex=-1;title.focus({preventScroll:true});}}
 function addModalEquipment(){
   if(game.owned.length<2)return;
@@ -47,11 +55,11 @@ function addModalEquipment(){
   $('modal-content').querySelector('.modal-actions').before(box);
   box.querySelectorAll('button').forEach(b=>b.onclick=()=>{equip(game,b.dataset.modalEquip);saveProgress();renderWeapons();updateHUD();box.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.modalEquip===game.equipped)));});
 }
-function controls(){return isTouch()?{run:'Giữ ◀ / ▶ bằng tay trái.',jump:'Tay phải chạm NHẢY.',attack:'Chạm TỰ ĐÁNH để bật / tắt đánh liên tục.',dash:'Chạm LƯỚT để né đạn.',buzz:'Chạm BUZZ! để tung sóng.',equip:'Chạm Kho emoji hoặc ô emoji',retry:'Tay trái giữ ◀ / ▶, tay phải chạm NHẢY. Bật TỰ ĐÁNH để rảnh tay né đòn.',intro:'Tay trái di chuyển · Tay phải NHẢY / LƯỚT.<br/>Chạm TỰ ĐÁNH một lần để bật đánh liên tục.'}:{run:'A D / ← → để chạy.',jump:'Space / W / ↑ để nhảy.',attack:'Giữ J để dùng chiêu emoji.',dash:'K / Shift lướt, né đạn.',buzz:'E / L tung sóng đẩy lùi.',equip:'Bấm Kho emoji hoặc phím 1–4',retry:'Thử nhảy đôi qua vực, giữ J để đánh và dùng K để né đòn.',intro:'A D chạy · Space nhảy · J đánh · K lướt · E BUZZ!'};}
-function controlLabel(key){return key==='pause'?(isTouch()?'Chạm TỰ ĐÁNH để bật hoặc tắt đánh liên tục.':'Giữ J để ra chiêu liên tục.'):controls()[key];}
+function controls(){return isTouch()?{run:'Giữ ◀ / ▶ bằng tay trái.',jump:'Tay phải chạm NHẢY.',attack:'Chạm TỰ ĐÁNH để bật / tắt đánh liên tục.',dash:'Chạm LƯỚT để né đạn.',buzz:'Chạm BUZZ! để tung sóng.',equip:'Chạm Kho emoji hoặc ô emoji',retry:'Tay trái giữ ◀ / ▶, tay phải chạm NHẢY. Bật TỰ ĐÁNH để rảnh tay né đòn.',intro:'Tay trái di chuyển · Tay phải NHẢY / LƯỚT.<br/>Chạm TỰ ĐÁNH một lần để bật đánh liên tục.'}:{run:'A D / ← → để chạy.',jump:'Space / W / ↑ để nhảy.',attack:'Giữ J / X để đánh, hoặc bấm TẤN CÔNG để bật / tắt tự đánh.',dash:'K / Shift lướt, né đạn.',buzz:'E / L tung sóng đẩy lùi.',equip:'Bấm Kho emoji hoặc phím 1–4',retry:'Thử nhảy đôi qua vực, giữ J để đánh và dùng K để né đòn.',intro:'A D chạy · Space nhảy · J đánh · K lướt · E BUZZ!<br/>Hoặc bấm TẤN CÔNG phía trên sân chơi.'};}
+function controlLabel(key){return key==='pause'?(isTouch()?'Chạm TỰ ĐÁNH để bật hoặc tắt đánh liên tục.':'Giữ J / X hoặc bấm TẤN CÔNG để đánh liên tục.'):controls()[key];}
 function controlCopy(key){return `<span data-control-copy="${key}">${controlLabel(key)}</span>`;}
 function closeModal(){modal.close();mode='playing';clearInput();canvas.focus({preventScroll:true});}
-function start(level=game.level){game=createGame(level,{...readSave(),score:0,collected:0,equipped:game.equipped});touchAutoAttack=false;document.querySelector('[data-action="attack"]').setAttribute('aria-pressed','false');renderer.reset();closeModal();saveProgress('restart');renderWeapons();updateHUD();activateAudio();notify(STAGES[level].subtitle);}
+function start(level=game.level){game=createGame(level,{...readSave(),score:0,collected:0,equipped:game.equipped});setAutoAttack(false);renderer.reset();closeModal();saveProgress('restart');renderWeapons();updateHUD();activateAudio();notify(STAGES[level].subtitle);}
 function nextStage(equipReward=true){
   if(equipReward)equip(game,STAGES[game.level].reward);saveProgress('advance');
   if(game.level===2){start(0);return;}
@@ -99,7 +107,6 @@ function updateHUD(){
   $('sound-button').textContent=`Âm thanh: ${sound?'bật':'tắt'}`;$('sound-button').setAttribute('aria-label',sound?'Tắt âm thanh':'Bật âm thanh');$('sound-button').title=sound?'Tắt âm thanh':'Bật âm thanh';
   const boss=game.enemies.find(e=>e.boss);$('boss-hud').hidden=!game.bossActive||boss.hp<=0;$('boss-name').textContent=STAGES[game.level].boss;$('boss-bar').style.width=`${boss.hp/boss.maxHp*100}%`;$('boss-phase').textContent=boss.hp<=0?'ĐÃ HẠ':boss.hp<boss.maxHp/2?'NỔI GIẬN!':'TRẬN BOSS';
   $('stage-objective').textContent=`Hạ ${STAGES[game.level].boss} → nhận ${WEAPONS[STAGES[game.level].reward].name}`;
-  document.querySelector('[data-action="attack"]').classList.toggle('held',touchAutoAttack);
 }
 function events(){for(const event of game.events){
   if(event.type==='jump')tone(380,.1,'sine',.04);
@@ -129,9 +136,10 @@ document.addEventListener('keydown',event=>{
 });
 document.addEventListener('keyup',event=>keys.delete(event.code));
 canvas.addEventListener('pointerdown',()=>{canvas.focus({preventScroll:true});activateAudio();});
+$('attack-button').onclick=()=>{if(mode!=='playing')return;activateAudio();toggleAutoAttack();canvas.focus({preventScroll:true});};
 document.querySelectorAll('[data-action]').forEach(button=>{
-  button.addEventListener('pointerdown',event=>{event.preventDefault();if(mode!=='playing')return;activateAudio();if(button.dataset.action==='attack'){touchAutoAttack=!touchAutoAttack;button.classList.toggle('held',touchAutoAttack);button.setAttribute('aria-pressed',String(touchAutoAttack));notify(touchAutoAttack?'Tự đánh đang bật. Rảnh tay để nhảy!':'Đã tắt tự đánh.');return;}button.setPointerCapture(event.pointerId);touches.set(event.pointerId,button.dataset.action);pressed.add(button.dataset.action);button.classList.add('held');});
-  const release=event=>{touches.delete(event.pointerId);if(![...touches.values()].includes(button.dataset.action))button.classList.remove('held');};
+  button.addEventListener('pointerdown',event=>{event.preventDefault();if(mode!=='playing')return;activateAudio();if(button.dataset.action==='attack'){toggleAutoAttack();return;}button.setPointerCapture(event.pointerId);touches.set(event.pointerId,button.dataset.action);pressed.add(button.dataset.action);button.classList.add('held');});
+  const release=event=>{if(button.dataset.action==='attack')return;touches.delete(event.pointerId);if(![...touches.values()].includes(button.dataset.action))button.classList.remove('held');};
   button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
 });
 window.addEventListener('blur',()=>{clearInput();pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){saveRecord();clearInput();pause();}});
@@ -145,7 +153,7 @@ function tick(now){
     accumulator+=dt;
     while(accumulator>=1/60&&mode==='playing'){
       const held=new Set([...keys].map(code=>bindings[code]).concat([...touches.values()]));
-      game.touchControls=isTouch();step(game,{left:held.has('left'),right:held.has('right'),attack:held.has('attack')||touchAutoAttack,jump:pressed.has('jump'),dash:pressed.has('dash'),buzz:pressed.has('buzz')},1/60);pressed.clear();events();accumulator-=1/60;
+      game.touchControls=isTouch();step(game,{left:held.has('left'),right:held.has('right'),attack:held.has('attack')||autoAttack,jump:pressed.has('jump'),dash:pressed.has('dash'),buzz:pressed.has('buzz')},1/60);pressed.clear();events();accumulator-=1/60;
     }
   }else accumulator=0;
   hudTimer+=dt;if(hudTimer>.08){updateHUD();hudTimer=0;}
