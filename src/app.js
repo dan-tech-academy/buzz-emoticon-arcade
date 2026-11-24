@@ -42,7 +42,7 @@ function setAutoAttack(enabled){
   autoAttack=enabled;
   document.querySelectorAll('[data-auto-attack]').forEach(button=>{button.classList.toggle('held',enabled);button.setAttribute('aria-pressed',String(enabled));});
   $('attack-label').textContent=enabled?'TỰ ĐÁNH: BẬT':'TẤN CÔNG';
-  $('attack-hint').textContent=enabled?'Bấm lần nữa để tắt':'Giữ J / X · hoặc bấm để tự đánh';
+  $('attack-hint').textContent=enabled?'Bấm lần nữa để tắt':'Giữ J/X · hoặc bấm';
   $('attack-button').setAttribute('aria-label',enabled?'Tự đánh: bật. Bấm để tắt.':'Tấn công. Bấm để bật tự đánh, hoặc giữ J hay X.');
 }
 function toggleAutoAttack(){setAutoAttack(!autoAttack);notify(autoAttack?'Tự đánh đang bật. Rảnh tay để nhảy!':'Đã tắt tự đánh.');}
